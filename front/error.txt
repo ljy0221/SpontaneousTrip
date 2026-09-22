@@ -1,0 +1,4 @@
+hotplace.js:12 
+ GET http://localhost:5173/final/hotplace/ 403 (Forbidden)
+getHotplaces	@	hotplace.js:12
+(익명)	@	HotplaceView.vue:8

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.ssafy.passproject.domain.review.repository.ReviewRepository">
+
+	<!-- Review DTO와 DB 컬럼 매핑 -->
+	<resultMap type="Review" id="reviewMap">
+		<id column="review_id" property="reviewId" />
+		<result column="place_id" property="placeId" />
+		<result column="user_id" property="userId" />
+		<result column="nickname" property="nickname" />
+		<result column="rating" property="rating" />
+		<result column="content" property="content" />
+		<result column="created_at" property="createdAt" />
+		<result column="time_suitability_score" property="timeSuitablityScore" />
+	</resultMap>
+
+	<!-- 1. 리뷰 등록 (createdAt은 DB에서 CURRENT_TIMESTAMP로 자동 생성될 수 있음) -->
+	<insert id="insertReview" parameterType="Review">
+		insert into review
+		(place_id, user_id, rating, content, time_suitability_score)
+		values
+		(#{placeId}, #{userId}, #{rating}, #{content}, #{timeSuitablityScore})
+		<!-- MySQL 기준, 자동 생성된 PK(reviewId)를 DTO에 다시 저장하는 옵션 -->
+		<selectKey resultType="Long" keyProperty="reviewId" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<!-- 🌟 추가: 리뷰 상세 조회 (selectReviewDetail) 🌟 -->
+	<select id="selectReviewDetail" parameterType="Long" resultMap="reviewMap">
+		SELECT 
+			r.review_id,
+			r.place_id,
+			r.user_id,
+			u.nickname,
+			r.rating,
+			r.content,
+			r.created_at,
+			r.time_suitability_score
+		FROM review r
+		LEFT JOIN users u ON r.user_id = u.user_id
+		WHERE r.review_id = #{reviewId}
+	</select>
+
+	<!-- 2. 특정 핫플레이스의 리뷰 목록 조회 (selectReviewsByPlaceId로 이름 변경됨) -->
+	<select id="selectReviewsByPlaceId" parameterType="Long" resultMap="reviewMap">
+		SELECT 
+			r.review_id,
+			r.place_id,
+			r.user_id,
+			u.nickname,
+			r.rating,
+			r.content,
+			r.created_at,
+			r.time_suitability_score
+		FROM review r
+		LEFT JOIN users u ON r.user_id = u.user_id
+		WHERE r.place_id = #{placeId}
+		ORDER BY r.created_at DESC
+	</select>
+	
+	<!-- 🌟 추가: 리뷰 수정 (updateReview) 🌟 -->
+	<update id="updateReview" parameterType="Review">
+		update review
+		set
+			rating = #{rating},
+			content = #{content},
+			time_suitability_score = #{timeSuitablityScore}
+		where review_id = #{reviewId}
+		and user_id = #{userId} <!-- 작성자만 수정 가능하도록 조건 추가 -->
+	</update>
+
+	<!-- 3. 리뷰 삭제 (작성자만 삭제 가능) -->
+	<delete id="deleteReview">
+		DELETE FROM review 
+		WHERE review_id = #{reviewId}
+		AND user_id = #{userId} <!-- 작성자만 삭제 가능하도록 조건 추가 -->
+	</delete>
+
+</mapper>

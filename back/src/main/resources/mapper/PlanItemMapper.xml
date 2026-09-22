@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.passproject.domain.planitem.repository.PlanItemRepository">
+
+    <resultMap id="PlanItemMap" type="com.ssafy.passproject.domain.planitem.entity.PlanItem">
+        <id property="planItemId" column="plan_item_id"/>
+        <result property="planId" column="plan_id"/>
+        <result property="placeId" column="place_id"/>
+        <result property="sequenceOrder" column="sequence_order"/>
+        <result property="transportMode" column="transport_mode"/>
+        <result property="estimatedDuration" column="estimated_duration"/>
+        
+        <!-- Hotplace Joined Fields -->
+        <result property="title" column="place_name"/>
+        <result property="overview" column="overview"/>
+        <result property="firstImage1" column="first_image_1"/>
+        <result property="latitude" column="latitude"/>
+        <result property="longitude" column="longitude"/>
+    </resultMap>
+
+    <select id="selectPlanItem" parameterType="long" resultMap="PlanItemMap">
+        SELECT p.plan_item_id, p.plan_id, p.place_id, p.sequence_order, p.transport_mode, p.estimated_duration,
+               h.place_name, h.overview, a.first_image1, a.latitude, a.longitude
+        FROM plan_item p
+        JOIN hotplace h ON p.place_id = h.place_id
+        LEFT JOIN attractions a ON h.place_id = a.content_id
+        WHERE p.plan_item_id = #{planItemId}
+    </select>
+
+    <select id="selectPlanItems" resultMap="PlanItemMap">
+        SELECT p.plan_item_id, p.plan_id, p.place_id, p.sequence_order, p.transport_mode, p.estimated_duration,
+               h.place_name, h.overview, a.first_image1, a.latitude, a.longitude
+        FROM plan_item p
+        JOIN hotplace h ON p.place_id = h.place_id
+        LEFT JOIN attractions a ON h.place_id = a.content_id
+        ORDER BY p.plan_id, p.sequence_order
+    </select>
+    
+    <select id="selectPlanItemsByPlanId" parameterType="long" resultMap="PlanItemMap">
+        SELECT p.plan_item_id, p.plan_id, p.place_id, p.sequence_order, p.transport_mode, p.estimated_duration,
+               h.place_name, h.overview, a.first_image1, a.latitude, a.longitude
+        FROM plan_item p
+        JOIN hotplace h ON p.place_id = h.place_id
+        LEFT JOIN attractions a ON h.place_id = a.content_id
+        WHERE p.plan_id = #{planId}
+        ORDER BY p.sequence_order
+    </select>
+
+    <insert id="insertPlanItem" parameterType="com.ssafy.passproject.domain.planitem.entity.PlanItem"
+            useGeneratedKeys="true" keyProperty="planItemId" keyColumn="plan_item_id">
+        INSERT INTO plan_item (plan_id, place_id, sequence_order, transport_mode, estimated_duration)
+        VALUES (#{planId}, #{placeId}, #{sequenceOrder}, #{transportMode}, #{estimatedDuration})
+    </insert>
+
+    <update id="updatePlanItem" parameterType="com.ssafy.passproject.domain.planitem.entity.PlanItem">
+        UPDATE plan_item
+        SET place_id = #{placeId},
+            sequence_order = #{sequenceOrder},
+            transport_mode = #{transportMode},
+            estimated_duration = #{estimatedDuration}
+        WHERE plan_item_id = #{planItemId}
+    </update>
+
+    <update id="updatePlanItemSequenceOrder">
+        UPDATE plan_item
+        SET sequence_order = #{sequenceOrder}
+        WHERE plan_item_id = #{planItemId}
+    </update>
+
+    <delete id="deletePlanItem" parameterType="long">
+        DELETE FROM plan_item
+        WHERE plan_item_id = #{planItemId}
+    </delete>
+    
+    <delete id="deletePlanItemsByPlanId" parameterType="long">
+        DELETE FROM plan_item
+        WHERE plan_id = #{planId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+sqlalchemy
+pymysql
+cryptography
+chromadb
+openai
+sentence-transformers
+python-dotenv
+httpx

@@ -1,0 +1,7 @@
+.env
+*.zip
+.env
+*.zip
+.omc/
+__pycache__/
+*.pyc

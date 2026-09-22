@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.ssafy.passproject.domain.hotplace.repository.HotplaceRepository">
+    
+    <sql id="gisTypeHandler">com.ssafy.passproject.handler.JtsPointTypeHandler</sql>
+
+	<resultMap type="hotplace" id="hotplaceMap">
+		<id column="place_id" property="placeId" />
+		<result column="place_name" property="placeName" />
+		<result column="category" property="category" />
+		<result column="address" property="address" />
+		<result column="overview" property="overview" />
+		<result column="image" property="image" />
+		
+		<result column="pos" 
+            property="pos" 
+            javaType="org.locationtech.jts.geom.Point" 
+            typeHandler="com.ssafy.passproject.handler.JtsPointTypeHandler" />
+		
+		<result column="api_source" property="apiSource" />
+		<result column="is_pet_friendly" property="isPetFriendly" />
+		<result column="avg_rating" property="avgRating" />
+		<result column="count" property="count" />
+	</resultMap>
+    
+    <resultMap type="Review" id="reviewResultMap">
+		<id column="r_review_id" property="reviewId" />
+		<result column="r_place_id" property="placeId" />
+		<result column="r_user_id" property="userId" />
+		<result column="r_rating" property="rating" />
+		<result column="r_content" property="content" />
+		<result column="r_created_at" property="createdAt" />
+		<result column="r_time_suitability_score" property="timeSuitablityScore" />
+	</resultMap>
+	
+	<resultMap type="hotplace" id="hotplaceReviewMap" extends="hotplaceMap">
+		<collection 
+			property="reviews" 
+			resultMap="reviewResultMap" 
+			columnPrefix="r_" />
+	</resultMap>
+
+
+	<insert id="insertHotplace" parameterType="hotplace" useGeneratedKeys="true" keyProperty="placeId">
+		insert into hotplace
+		(place_name, category, address, overview, pos, api_source, is_pet_friendly)
+		values (
+		    #{placeName}, 
+		    #{category}, 
+		    #{address},
+		    #{overview},
+            #{pos, javaType=org.locationtech.jts.geom.Point, typeHandler=com.ssafy.passproject.handler.JtsPointTypeHandler},
+		    #{apiSource}, 
+		    #{isPetFriendly}
+		)
+	</insert>
+
+	<update id="updateHotplace" parameterType="hotplace">
+		update hotplace set
+		place_name=#{placeName}, 
+		category=#{category}, 
+		address=#{address},
+		overview=#{overview},
+        pos=#{pos, javaType=org.locationtech.jts.geom.Point, typeHandler=com.ssafy.passproject.handler.JtsPointTypeHandler}, 
+		api_source=#{apiSource},
+		is_pet_friendly=#{isPetFriendly}
+		where place_id=#{placeId}
+	</update>
+
+	<select id="selectHotplaceDetail" parameterType="hotplace" resultMap="hotplaceMap">
+		select * from hotplace
+		where place_id = #{placeId}
+	</select>
+	
+	<select id="selectHotplaceList" resultMap="hotplaceMap">
+		select * from hotplace
+	</select>
+
+	<select id="findByCategory" parameterType="String" resultMap="hotplaceMap">
+		SELECT 
+			place_id,
+			place_name,
+			category,
+			address,
+			overview,
+			image,
+			pos,
+			api_source,
+			is_pet_friendly,
+			avg_rating
+		FROM hotplace
+		WHERE category = #{category}
+	</select>
+	
+	<delete id="deleteHotplace" parameterType="hotplace">
+		delete from hotplace
+		where place_id = #{placeId}
+	</delete>
+
+	<update id="updateHotplaceAvgRating" parameterType="hotplace"> 
+        UPDATE hotplace
+		SET avg_rating = (
+		    SELECT AVG(rating)
+		    FROM review
+		    WHERE place_id = #{placeId}
+		)
+		WHERE place_id = #{placeId}
+	</update>
+
+	<select id="selectHotplaceDetailWithReviews" resultMap="hotplaceReviewMap">
+		SELECT h.*, r.*
+		FROM hotplace h
+		LEFT JOIN review r ON
+		h.place_id = r.place_id
+		WHERE h.place_id = #{placeId}
+	</select>
+
+	<!-- MySQL 공간 함수 사용 - MBR 최적화 적용 -->
+	<select id="findNearByHotplaces" resultMap="hotplaceMap">
+		SELECT
+			place_id,
+			place_name,
+			category,
+			address,
+			overview,
+			image,
+			pos,
+			api_source,
+			is_pet_friendly,
+			avg_rating
+		FROM hotplace
+		WHERE 
+			-- 1차 필터: MBR로 공간 인덱스 활용
+			MBRContains(
+				ST_GeomFromText(CONCAT(
+					'POLYGON((',
+					#{minLat}, ' ', #{minLon}, ',',
+					#{minLat}, ' ', #{maxLon}, ',',
+					#{maxLat}, ' ', #{maxLon}, ',',
+					#{maxLat}, ' ', #{minLon}, ',',
+					#{minLat}, ' ', #{minLon},
+					'))'
+				), 4326),
+				pos
+			)
+			-- 2차 필터: 정확한 거리 계산 (MBR 통과한 데이터만)
+			AND ST_Distance_Sphere(
+				pos,
+				ST_GeomFromText(CONCAT('POINT(', #{currentLat}, ' ', #{currentLon}, ')'), 4326)
+			) &lt;= #{radiusMeters}
+		ORDER BY ST_Distance_Sphere(
+			pos,
+			ST_GeomFromText(CONCAT('POINT(', #{currentLat}, ' ', #{currentLon}, ')'), 4326)
+		)
+		<if test="offset != null and limit != null">
+		LIMIT #{limit} OFFSET #{offset}
+		</if>
+	</select>
+
+	<!-- 전체 개수 조회 - MBR 최적화 적용 -->
+	<select id="countNearByHotplaces" resultType="int">
+		SELECT COUNT(*)
+		FROM hotplace
+		WHERE 
+			-- 1차 필터: MBR로 공간 인덱스 활용
+			MBRContains(
+				ST_GeomFromText(CONCAT(
+					'POLYGON((',
+					#{minLat}, ' ', #{minLon}, ',',
+					#{minLat}, ' ', #{maxLon}, ',',
+					#{maxLat}, ' ', #{maxLon}, ',',
+					#{maxLat}, ' ', #{minLon}, ',',
+					#{minLat}, ' ', #{minLon},
+					'))'
+				), 4326),
+				pos
+			)
+			-- 2차 필터: 정확한 거리 계산
+			AND ST_Distance_Sphere(
+				pos,
+				ST_GeomFromText(CONCAT('POINT(', #{currentLat}, ' ', #{currentLon}, ')'), 4326)
+			) &lt;= #{radiusMeters}
+	</select>
+
+	<!-- 카테고리 필터 포함 위치 기반 검색 - MBR 최적화 적용 -->
+	<select id="findNearByHotplacesWithCategory" resultMap="hotplaceMap">
+		SELECT
+			place_id,
+			place_name,
+			category,
+			address,
+			overview,
+			image,
+			pos,
+			api_source,
+			is_pet_friendly,
+			avg_rating
+		FROM hotplace
+		WHERE 
+			-- 1차 필터: MBR로 공간 인덱스 활용
+			MBRContains(
+				ST_GeomFromText(CONCAT(
+					'POLYGON((',
+					#{minLat}, ' ', #{minLon}, ',',
+					#{minLat}, ' ', #{maxLon}, ',',
+					#{maxLat}, ' ', #{maxLon}, ',',
+					#{maxLat}, ' ', #{minLon}, ',',
+					#{minLat}, ' ', #{minLon},
+					'))'
+				), 4326),
+				pos
+			)
+			-- 2차 필터: 정확한 거리 계산
+			AND ST_Distance_Sphere(
+				pos,
+				ST_GeomFromText(CONCAT('POINT(', #{currentLat}, ' ', #{currentLon}, ')'), 4326)
+			) &lt;= #{radiusMeters}
+			-- 3차 필터: 카테고리
+			AND category = #{category}
+		ORDER BY ST_Distance_Sphere(
+			pos,
+			ST_GeomFromText(CONCAT('POINT(', #{currentLat}, ' ', #{currentLon}, ')'), 4326)
+		)
+		<if test="offset != null and limit != null">
+		LIMIT #{limit} OFFSET #{offset}
+		</if>
+	</select>
+
+	<!-- 카테고리 필터 포함 전체 개수 조회 - MBR 최적화 적용 -->
+	<select id="countNearByHotplacesWithCategory" resultType="int">
+		SELECT COUNT(*)
+		FROM hotplace
+		WHERE 
+			-- 1차 필터: MBR로 공간 인덱스 활용
+			MBRContains(
+				ST_GeomFromText(CONCAT(
+					'POLYGON((',
+					#{minLat}, ' ', #{minLon}, ',',
+					#{minLat}, ' ', #{maxLon}, ',',
+					#{maxLat}, ' ', #{maxLon}, ',',
+					#{maxLat}, ' ', #{minLon}, ',',
+					#{minLat}, ' ', #{minLon},
+					'))'
+				), 4326),
+				pos
+			)
+			-- 2차 필터: 정확한 거리 계산
+			AND ST_Distance_Sphere(
+				pos,
+				ST_GeomFromText(CONCAT('POINT(', #{currentLat}, ' ', #{currentLon}, ')'), 4326)
+			) &lt;= #{radiusMeters}
+			-- 3차 필터: 카테곦0리
+			AND category = #{category}
+	</select>
+
+	<!-- 중복 체크: 같은 이름과 좌표를 가진 hotplace 찾기 -->
+	<select id="findByNameAndPosition" resultMap="hotplaceMap">
+		SELECT * FROM hotplace
+		WHERE place_name = #{placeName}
+		AND ST_Equals(pos, #{pos, javaType=org.locationtech.jts.geom.Point, typeHandler=com.ssafy.passproject.handler.JtsPointTypeHandler})
+		LIMIT 1
+	</select>
+
+	<!-- Hotplace count 증가 (QuickPlan 생성 시 사용) -->
+	<update id="incrementHotplaceCount">
+		UPDATE hotplace
+		SET count = count + 1
+		WHERE place_id = #{placeId}
+	</update>
+
+	<!-- 위치 기반 인기 Hotplace 조회 (count 내림차순) -->
+	<select id="findPopularHotplacesByLocation" resultMap="hotplaceMap">
+		SELECT
+			place_id,
+			place_name,
+			category,
+			address,
+			overview,
+			image,
+			pos,
+			api_source,
+			is_pet_friendly,
+			avg_rating,
+			count
+		FROM hotplace
+		WHERE ST_Distance_Sphere(
+			pos,
+			ST_GeomFromText(CONCAT('POINT(', #{currentLat}, ' ', #{currentLon}, ')'), 4326)
+		) &lt;= #{radiusMeters}
+		AND count > 0
+		ORDER BY count DESC, avg_rating DESC
+		LIMIT #{limit}
+	</select>
+
+</mapper>

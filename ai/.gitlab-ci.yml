@@ -1,0 +1,23 @@
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  tags:
+    - docker # 러너 등록 시 설정한 태그
+  script:
+    - docker login -u "$DOCKER_USER" -p "$DOCKER_PASSWORD"
+    - docker build -t 2jay0/passproject-final-ai-ljy-gdy-chatbot:latest -f Dockerfile .
+    - docker push 2jay0/passproject-final-ai-ljy-gdy-chatbot:latest
+
+deploy:
+  stage: deploy
+  tags:
+    - deploy
+  script:
+    # 절대 경로 사용
+    - cd /home/ubuntu/chatbot
+    - docker-compose pull
+    - docker-compose up -d
+    - docker image prune -f

@@ -1,0 +1,117 @@
+variables:
+  DOCKER_IMAGE: ${DOCKER_USERNAME}/passproject-frontend
+  CONTAINER_NAME: passproject-frontend
+
+stages:
+  - build
+  - test
+  - sync
+  - deploy
+
+# 1. 빌드 단계 (master와 deploy 모두 수행)
+build:
+  stage: build
+  tags:
+    - shell
+  script:
+    - echo "Building Docker image..."
+    - docker build -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:${CI_COMMIT_SHA} .
+    - echo "Logging in to Docker Hub..."
+    - echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin
+    - echo "Pushing Docker image to Docker Hub..."
+    - docker push ${DOCKER_IMAGE}:latest
+    - docker push ${DOCKER_IMAGE}:${CI_COMMIT_SHA}
+  only:
+    - master
+    - deploy
+
+test:lint:
+  stage: test
+  tags:
+    - shell
+  script:
+    - echo "Running ESLint inside Docker..."
+    - docker run --rm ${DOCKER_IMAGE}:latest npm run lint
+  only:
+    - master
+    - deploy
+  allow_failure: true
+
+# 3. 자동 전파 단계: master -> deploy
+sync-master-to-deploy:
+  stage: sync
+  tags:
+    - shell
+  script:
+    - echo "Syncing master to deploy branch..."
+    - git remote set-url origin https://oauth2:${GIT_PUSH_TOKEN}@lab.ssafy.com/${CI_PROJECT_PATH}.git
+    - git config --global user.email "ci-bot@example.com"
+    - git config --global user.name "CI Bot"
+    - git fetch origin
+    - git checkout deploy || git checkout -b deploy origin/deploy
+    - echo "Hard resetting deploy to master..."
+    - git merge origin/master -X theirs --no-ff -m "Auto-sync master to deploy"
+    - git push origin deploy
+  only:
+    - master
+
+# 4. 배포 단계
+deploy:
+  stage: deploy
+  tags:
+    - shell
+  script:
+    - echo "Deploying on local EC2..."
+    - |
+      if [ -f deploy.sh ]; then
+        chmod +x deploy.sh
+        ./deploy.sh
+      else
+        echo "Pulling latest image..."
+        docker-compose pull frontend
+        echo "Stopping old containers..."
+        docker-compose down
+        echo "Starting new containers..."
+        docker-compose up -d
+        echo "Waiting for services to start..."
+        sleep 15
+        echo "Health check..."
+        # 80번 포트(Nginx)가 살아있는지 확인
+        if curl -f http://localhost:80 > /dev/null 2>&1; then
+          echo "Frontend (HTTPS Proxy) is healthy"
+        else
+          echo "Health check failed"
+          # 서비스 이름 대신 컨테이너 이름을 직접 지정하여 로그 출력
+          docker logs nginx-proxy 
+          exit 1
+        fi
+        echo "Cleaning up old images..."
+        docker image prune -f
+        echo "Deployment completed successfully!"
+        docker-compose ps
+      fi
+  only:
+    - deploy
+  environment:
+    name: production
+    url: https://dongyeop.shop
+
+# 5. 수동 롤백 작업
+rollback:
+  stage: deploy
+  tags:
+    - shell
+  variables:
+    ROLLBACK_SHA: "previous-commit-sha"
+  script:
+    - echo "Rolling back to ${ROLLBACK_SHA}..."
+    - docker-compose down
+    - docker pull ${DOCKER_IMAGE}:${ROLLBACK_SHA}
+    - docker tag ${DOCKER_IMAGE}:${ROLLBACK_SHA} ${DOCKER_IMAGE}:latest
+    - docker-compose up -d
+    - echo "Rollback completed!"
+    - docker-compose ps
+  when: manual
+  only:
+    - deploy
+    - master

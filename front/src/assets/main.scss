@@ -1,0 +1,637 @@
+/* ============================================
+   SCSS Variables & Mixins
+   ============================================ */
+
+// Breakpoints (Mobile First)
+$breakpoint-tablet: 768px;
+$breakpoint-desktop: 1024px;
+$breakpoint-large: 1280px;
+
+// Mobile First Breakpoint Mixins
+@mixin tablet {
+  @media (min-width: $breakpoint-tablet) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: $breakpoint-desktop) {
+    @content;
+  }
+}
+
+@mixin large-desktop {
+  @media (min-width: $breakpoint-large) {
+    @content;
+  }
+}
+
+// Utility Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-card-hover);
+  }
+}
+
+/* ============================================
+   Design System Variables (CSS Custom Properties)
+   ============================================ */
+:root {
+  /* Colors - Primary */
+  --color-primary: #4F46E5; /* Indigo 600 */
+  --color-primary-hover: #4338CA; /* Indigo 700 */
+  --color-secondary: #10B981; /* Emerald 500 */
+  --color-danger: #EF4444; /* Red 500 */
+
+  /* Colors - Cyan/Teal (From Design Reference) */
+  --color-cyan: #00B8D9;
+  --color-cyan-hover: #00A3C4;
+  --color-cyan-light: #E1F5FE;
+  --color-teal: #22D3EE;
+  --color-teal-hover: #06B6D4;
+  --color-teal-light: #CFFAFE;
+
+  /* Colors - Background */
+  --color-background: #F3F4F6; /* Gray 100 */
+  --color-background-alt: #F8FAFC; /* Slate 50 */
+  --color-background-beige: #F5F1E8; /* Beige tone for login */
+  --color-surface: #FFFFFF;
+
+  /* Colors - Text */
+  --color-text-main: #111827; /* Gray 900 */
+  --color-text-muted: #6B7280; /* Gray 500 */
+  --color-text-light: #9CA3AF; /* Gray 400 */
+  --color-border: #E5E7EB; /* Gray 200 */
+  --color-border-light: #F3F4F6; /* Gray 100 */
+
+  /* Colors - Status */
+  --color-status-approved: #28A745;
+  --color-status-approved-bg: #E2F5E6;
+  --color-status-pending: #FFC107;
+  --color-status-pending-bg: #FFF8E1;
+  --color-status-rejected: #DC3545;
+  --color-status-rejected-bg: #FAE3E5;
+
+  /* Colors - Danger Zone */
+  --color-danger-border: #FCA5A5;
+  --color-danger-bg: #FEE2E2;
+
+  /* Spacing - Mobile First */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.5rem;
+  --spacing-2xl: 2rem;
+
+  /* Typography - Mobile First */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+
+  /* Shadows - Enhanced */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 8px 16px rgba(0, 0, 0, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(34, 211, 238, 0.2);
+
+  /* Radius - Enhanced */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+}
+
+// Responsive spacing adjustments
+@include tablet {
+  :root {
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+  }
+}
+
+/* ============================================
+   Reset & Base Styles
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-background);
+  color: var(--color-text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-size: var(--font-size-base);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+/* ============================================
+   Utility Classes - Mobile First
+   ============================================ */
+
+// Container
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  
+  @include tablet {
+    max-width: 720px;
+  }
+  
+  @include desktop {
+    max-width: 1200px;
+  }
+}
+
+// Buttons - Mobile First
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  border: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  
+  @include tablet {
+    padding: 0.625rem 1.25rem;
+    font-size: var(--font-size-base);
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+
+  &:hover {
+    background-color: var(--color-primary-hover);
+  }
+}
+
+.btn-cyan {
+  background-color: var(--color-cyan);
+  color: white;
+
+  &:hover {
+    background-color: var(--color-cyan-hover);
+  }
+}
+
+.btn-teal {
+  background-color: var(--color-teal);
+  color: white;
+
+  &:hover {
+    background-color: var(--color-teal-hover);
+  }
+}
+
+.btn-secondary {
+  background-color: white;
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
+
+  &:hover {
+    background-color: var(--color-background);
+    border-color: var(--color-text-muted);
+  }
+}
+
+.btn-danger {
+  background-color: var(--color-danger);
+  color: white;
+
+  &:hover {
+    background-color: #DC2626;
+  }
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: var(--font-size-sm);
+  
+  @include tablet {
+    padding: 0.375rem 0.875rem;
+  }
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: var(--font-size-base);
+  
+  @include tablet {
+    padding: 0.75rem 1.75rem;
+    font-size: var(--font-size-lg);
+  }
+}
+
+.btn-block {
+  width: 100%;
+}
+
+// Cards - Mobile First
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--spacing-lg);
+  transition: box-shadow 0.3s ease;
+  
+  @include tablet {
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+}
+
+.card-compact {
+  padding: var(--spacing-md);
+  
+  @include tablet {
+    padding: var(--spacing-lg);
+  }
+}
+
+// Forms - Mobile First
+.form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-main);
+  letter-spacing: 0.01em;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  transition: all 0.2s ease;
+  background-color: var(--color-surface);
+  
+  @include tablet {
+    padding: 0.625rem 0.875rem;
+  }
+
+  &:hover {
+    border-color: var(--color-text-muted);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-cyan);
+    box-shadow: var(--shadow-focus);
+    background-color: white;
+  }
+
+  &::placeholder {
+    color: var(--color-text-light);
+  }
+}
+
+.form-input-icon {
+  position: relative;
+
+  input {
+    padding-left: 2.5rem;
+  }
+
+  .icon {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+    pointer-events: none;
+  }
+}
+
+/* ============================================
+   Status Pills & Badges
+   ============================================ */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  line-height: 1;
+}
+
+.status-pill-approved {
+  background-color: var(--color-status-approved-bg);
+  color: var(--color-status-approved);
+}
+
+.status-pill-pending {
+  background-color: var(--color-status-pending-bg);
+  color: var(--color-status-pending);
+}
+
+.status-pill-rejected {
+  background-color: var(--color-status-rejected-bg);
+  color: var(--color-status-rejected);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.badge-new {
+  background-color: #FFF3E0;
+  color: #E65100;
+}
+
+.badge-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.badge-cyan {
+  background-color: var(--color-cyan);
+  color: white;
+}
+
+/* ============================================
+   Danger Zone
+   ============================================ */
+.danger-zone {
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-danger-border);
+  background-color: var(--color-danger-bg);
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  
+  @include tablet {
+    padding: var(--spacing-2xl);
+  }
+}
+
+.empty-state-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--spacing-lg);
+  color: var(--color-text-muted);
+  
+  @include tablet {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+.empty-state-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin-bottom: var(--spacing-sm);
+  
+  @include tablet {
+    font-size: var(--font-size-xl);
+  }
+}
+
+.empty-state-description {
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   Table Enhancements - Mobile First
+   ============================================ */
+.table-container {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  
+  @include tablet {
+    border-radius: var(--radius-xl);
+  }
+}
+
+.table-header {
+  background-color: var(--color-background-alt);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+table {
+  width: 100%;
+  
+  tbody tr {
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--color-background-alt);
+    }
+  }
+}
+
+/* ============================================
+   Page Header
+   ============================================ */
+.page-header {
+  margin-bottom: var(--spacing-lg);
+  
+  @include tablet {
+    margin-bottom: var(--spacing-xl);
+  }
+}
+
+.page-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin-bottom: 0.5rem;
+  
+  @include tablet {
+    font-size: var(--font-size-3xl);
+  }
+}
+
+.page-description {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  
+  @include tablet {
+    font-size: var(--font-size-base);
+  }
+}
+
+/* ============================================
+   Pagination - Mobile First
+   ============================================ */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  margin-top: var(--spacing-lg);
+  
+  @include tablet {
+    gap: 0.5rem;
+    margin-top: var(--spacing-xl);
+  }
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  
+  @include tablet {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  &:hover:not(.pagination-btn-active) {
+    background-color: var(--color-background);
+    border-color: var(--color-text-muted);
+  }
+}
+
+.pagination-btn-active {
+  background-color: var(--color-cyan);
+  color: white;
+  border-color: var(--color-cyan);
+}
+
+/* ============================================
+   Grid Layouts - Mobile First
+   ============================================ */
+.grid-2,
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+  
+  @include tablet {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
+  }
+  
+  @include desktop {
+    &.grid-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+.mt-1 { margin-top: var(--spacing-xs); }
+.mt-2 { margin-top: var(--spacing-sm); }
+.mt-3 { margin-top: var(--spacing-md); }
+.mt-4 { margin-top: var(--spacing-lg); }
+.mt-5 { margin-top: var(--spacing-xl); }
+
+.mb-1 { margin-bottom: var(--spacing-xs); }
+.mb-2 { margin-bottom: var(--spacing-sm); }
+.mb-3 { margin-bottom: var(--spacing-md); }
+.mb-4 { margin-bottom: var(--spacing-lg); }
+.mb-5 { margin-bottom: var(--spacing-xl); }
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.d-flex { display: flex; }
+.flex-column { flex-direction: column; }
+.align-items-center { align-items: center; }
+.justify-content-center { justify-content: center; }
+.justify-content-between { justify-content: space-between; }

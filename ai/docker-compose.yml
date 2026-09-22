@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  chatbot:
+    build:
+      context: .
+      dockerfile: ./Dockerfile # Dockerfile 위치 지정
+    container_name: ssafy-rag-bot
+    ports:
+      - "9000:9000"
+    volumes:
+      # 로컬의 ./data 폴더를 컨테이너 내부의 /data 폴더로 연결
+      - ./data:/data
+    env_file:
+      - .env
+    environment:
+      # 컨테이너 내부에서 볼륨 매핑된 경로를 지정
+      - CHROMA_DB_PATH=/data/chroma_db
+      - DB_HOST=${DB_HOST} # 로컬 MySQL 접속 시 필요할 수 있음
+      # GMS API (SSAFY)
+      - GMS_API_KEY=${GMS_API_KEY}
+      - GMS_API_BASE=${GMS_API_BASE}
+      # Database
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      # Paths
+      - CHROMA_DB_PATH=/data/chroma_db
+      - WEATHER_API_SERVICEKEY=${WEATHER_API_SERVICEKEY}
+    networks:
+      - pass-link
+
+networks:
+  pass-link:
+    external: true
+    name: pass-network

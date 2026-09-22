@@ -1,0 +1,51 @@
+stages:
+  - build
+  - sync
+  - deploy
+
+variables:
+  DOCKER_IMAGE: "${DOCKER_USERNAME}/passproject-backend"
+  CONTAINER_NAME: "passproject-backend"
+
+# 1. 빌드 단계: Docker 이미지를 생성합니다.
+build:
+  stage: build
+  tags:
+    - shell
+  script:
+    - echo "Building Backend Docker image with Maven..."
+    - docker build -t ${DOCKER_IMAGE}:latest -t ${DOCKER_IMAGE}:${CI_COMMIT_SHA} .
+  only:
+    - master
+
+# 2. 동기화 단계: master 브랜치의 최신 코드를 deploy 브랜치로 강제 전송합니다.
+sync-master-to-deploy:
+  stage: sync
+  tags:
+    - shell
+  script:
+    - echo "Syncing master to deploy branch..."
+    - git remote set-url origin https://oauth2:${GIT_PUSH_TOKEN}@lab.ssafy.com/${CI_PROJECT_PATH}.git
+    - git config --global user.email "ci-bot@example.com"
+    - git config --global user.name "CI Bot"
+    - git fetch origin
+    # deploy 브랜치로 전환 및 master 내용으로 강제 덮어쓰기
+    - git checkout deploy || git checkout -b deploy origin/deploy
+    - git reset --hard origin/master
+    - git push origin deploy --force
+  only:
+    - master
+
+# 3. 배포 단계: EC2 서버에서 컨테이너를 실행합니다.
+deploy:
+  stage: deploy
+  tags:
+    - shell
+  script:
+    - echo "Deploying Backend on EC2 (Port 9001)..."
+    # 기존 컨테이너 중지 및 삭제 후 새로 실행
+    - docker-compose down --remove-orphans || true
+    - docker-compose up -d
+    - docker image prune -f
+  only:
+    - deploy

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.passproject.domain.quickplan.repository.QuickPlanRepository">
+
+    <!-- ResultMap 정의 -->
+    <resultMap id="QuickPlanMap" type="com.ssafy.passproject.domain.quickplan.entity.QuickPlan">
+        <id property="planId" column="plan_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="totalTimeInput" column="total_time_input"/>
+        <result property="startLocation" column="start_location"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="status" column="status" typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+    </resultMap>
+    
+    <!-- PlanItem을 포함한 ResultMap -->
+    <resultMap id="QuickPlanWithItemsMap" type="com.ssafy.passproject.domain.quickplan.entity.QuickPlan" extends="QuickPlanMap">
+        <collection property="planItems" ofType="com.ssafy.passproject.domain.planitem.entity.PlanItem">
+            <id property="planItemId" column="plan_item_id"/>
+            <result property="planId" column="plan_id"/>
+            <result property="placeId" column="place_id"/>
+            <result property="sequenceOrder" column="sequence_order"/>
+            <result property="transportMode" column="transport_mode"/>
+            <result property="estimatedDuration" column="estimated_duration"/>
+            <!-- Hotplace Joined Fields -->
+            <result property="title" column="place_name"/>
+            <result property="overview" column="overview"/>
+            <result property="latitude" column="latitude"/>
+            <result property="longitude" column="longitude"/>
+        </collection>
+    </resultMap>
+
+    <!-- 기본 조회 (단건) -->
+    <select id="selectQuickPlan" parameterType="long" resultMap="QuickPlanMap">
+        SELECT plan_id, user_id, total_time_input, start_location, created_at, status
+        FROM quick_plan
+        WHERE plan_id = #{planId}
+    </select>
+
+    <!-- 기본 조회 (목록) -->
+    <select id="selectQuickPlans" parameterType="long" resultMap="QuickPlanMap">
+        SELECT plan_id, user_id, total_time_input, start_location, created_at, status
+        FROM quick_plan
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- status로 필터링된 목록 조회 -->
+    <select id="selectQuickPlansByStatus" resultMap="QuickPlanMap">
+        SELECT plan_id, user_id, total_time_input, start_location, created_at, status
+        FROM quick_plan
+        WHERE user_id = #{userId}
+        AND status = #{status, typeHandler=org.apache.ibatis.type.EnumTypeHandler}
+        ORDER BY created_at DESC
+    </select>
+    
+    <!-- PlanItem을 포함한 조회 (단건) -->
+    <select id="selectQuickPlanWithItems" parameterType="long" resultMap="QuickPlanWithItemsMap">
+        SELECT 
+            qp.plan_id, qp.user_id, qp.total_time_input, qp.start_location, qp.created_at, qp.status,
+            pi.plan_item_id, pi.plan_id, pi.place_id, pi.sequence_order, pi.transport_mode, pi.estimated_duration,
+            h.place_name, h.overview,
+            ST_Y(h.pos) AS latitude,
+            ST_X(h.pos) AS longitude
+        FROM quick_plan qp
+        LEFT JOIN plan_item pi ON qp.plan_id = pi.plan_id
+        LEFT JOIN hotplace h ON pi.place_id = h.place_id
+        WHERE qp.plan_id = #{planId}
+        ORDER BY pi.sequence_order
+    </select>
+
+    <!-- PlanItem을 포함한 조회 (목록) -->
+    <select id="selectQuickPlansWithItems" parameterType="long" resultMap="QuickPlanWithItemsMap">
+        SELECT 
+            qp.plan_id, qp.user_id, qp.total_time_input, qp.start_location, qp.created_at, qp.status,
+            pi.plan_item_id, pi.plan_id, pi.place_id, pi.sequence_order, pi.transport_mode, pi.estimated_duration,
+            h.place_name, h.overview,
+            ST_Y(h.pos) AS latitude,
+            ST_X(h.pos) AS longitude
+        FROM quick_plan qp
+        LEFT JOIN plan_item pi ON qp.plan_id = pi.plan_id
+        LEFT JOIN hotplace h ON pi.place_id = h.place_id
+        WHERE qp.user_id = #{userId}
+        ORDER BY qp.created_at DESC, pi.sequence_order
+    </select>
+
+    <insert id="insertQuickPlan" parameterType="com.ssafy.passproject.domain.quickplan.entity.QuickPlan"
+            useGeneratedKeys="true" keyProperty="planId" keyColumn="plan_id">
+        INSERT INTO quick_plan (user_id, total_time_input, start_location, created_at, status)
+        VALUES (#{userId}, #{totalTimeInput}, #{startLocation}, NOW(), #{status, typeHandler=org.apache.ibatis.type.EnumTypeHandler})
+    </insert>
+
+    <update id="updateQuickPlan" parameterType="com.ssafy.passproject.domain.quickplan.entity.QuickPlan">
+        UPDATE quick_plan
+        SET total_time_input = #{totalTimeInput},
+            start_location = #{startLocation},
+            status = #{status, typeHandler=org.apache.ibatis.type.EnumTypeHandler}
+        WHERE plan_id = #{planId}
+    </update>
+
+    <!-- Status만 업데이트 -->
+    <update id="updateQuickPlanStatus">
+        UPDATE quick_plan
+        SET status = #{status, typeHandler=org.apache.ibatis.type.EnumTypeHandler}
+        WHERE plan_id = #{planId}
+    </update>
+
+    <delete id="deleteQuickPlan" parameterType="long">
+        DELETE FROM quick_plan
+        WHERE plan_id = #{planId}
+    </delete>
+
+</mapper>

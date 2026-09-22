@@ -1,0 +1,22 @@
+services:
+  backend:
+    image: ${DOCKER_IMAGE}:latest
+    container_name: ${CONTAINER_NAME}
+    ports:
+      - "9001:9001"
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JWT_SECRET=${SPRING_JWT_SECRET}
+      - TOUR_API_SERVICEKEY=${TOUR_API_SERVICEKEY}
+      - KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}
+
+    restart: always
+    networks:
+      - pass-link
+
+networks:
+  pass-link:
+    external: true
+    name: pass-network

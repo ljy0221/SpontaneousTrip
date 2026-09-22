@@ -1,0 +1,6 @@
+# .dockerignore
+data/
+__pycache__/
+.env
+.git
+run_embedding.py

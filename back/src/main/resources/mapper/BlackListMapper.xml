@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.passproject.domain.auth.repository.BlackListRepository">
+
+    <resultMap id="BlackListResultMap" type="com.ssafy.passproject.domain.auth.entity.BlackList">
+        <id property="id" column="id"/>
+        <result property="accessToken" column="access_token"/>
+        <result property="email" column="email"/>
+        <result property="expiration" column="expiration"/>
+    </resultMap>
+
+    <!-- BlackList에 토큰 추가 -->
+    <insert id="insertBlackList" parameterType="com.ssafy.passproject.domain.auth.entity.BlackList">
+        INSERT INTO blacklist (access_token, email, expiration)
+        VALUES (#{accessToken}, #{email}, #{expiration})
+    </insert>
+
+    <!-- 토큰이 BlackList에 존재하는지 확인 -->
+    <select id="existsByToken" parameterType="string" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM blacklist
+        WHERE access_token = #{token}
+    </select>
+
+    <!-- 토큰으로 BlackList 조회 -->
+    <select id="findByToken" parameterType="string" resultMap="BlackListResultMap">
+        SELECT id, access_token, email, expiration
+        FROM blacklist
+        WHERE access_token = #{token}
+    </select>
+
+    <!-- 만료된 토큰 삭제 (배치 작업용) -->
+    <delete id="deleteExpiredTokens">
+        DELETE FROM blacklist
+        WHERE STR_TO_DATE(expiration, '%a %b %d %H:%i:%s KST %Y') &lt; NOW()
+    </delete>
+
+</mapper>
